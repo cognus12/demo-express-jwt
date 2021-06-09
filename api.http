@@ -1,0 +1,49 @@
+### Registration
+POST http://localhost:3000/user/sign-up
+Content-Type: application/json
+
+{
+  "email": "test123@m.ya",
+  "password": "qwerty12",
+  "firstName": "User",
+  "lastName": "Tester",
+  "username": "tester123"
+}
+
+### Login
+POST http://localhost:3000/user/sign-in
+Content-Type: application/json
+
+{
+  "email": "test123@m.ya",
+  "password": "qwerty12"
+}
+
+### Refresh
+
+GET http://localhost:3000/user/refresh
+Content-Type: application/json
+Cookie: refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoiNjBkY2QzNDIwYzY0NDYzNzJjMDgwY2JjIn0sImlhdCI6MTYyNTA4NDczOCwiZXhwIjoxNjI3Njc2NzM4fQ.qSuTGnDa2GdWJIdRl1nvU_9RDdXmGajmnRU3M3YxUfY
+
+### Logout
+POST http://localhost:3000/user/logout
+Content-Type: application/json
+
+### Edit
+PUT http://localhost:3000/user/edit
+Content-Type: application/json
+Authorization: bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoiNjBkMGRmNmE5NDA1MzUzMjNjZGYwNzBhIn0sImlhdCI6MTYyNTA4NDAzNCwiZXhwIjoxNjI1MDg3NjM0fQ.o41X0MkAnP_VZqJw1KQVKSUeEbrAUV_LXAA4dTYeeiY
+
+{
+  "id": "60d0df6a940535323cdf070a",
+  "username": "new_name"
+}
+
+### Delete
+DELETE http://localhost:3000/user/delete
+Content-Type: application/json
+Authorization: bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoiNjBkMGRmNmE5NDA1MzUzMjNjZGYwNzBhIn0sImlhdCI6MTYyNTA4NDAzNCwiZXhwIjoxNjI1MDg3NjM0fQ.o41X0MkAnP_VZqJw1KQVKSUeEbrAUV_LXAA4dTYeeiY
+
+{
+  "id": "60d0df6a940535323cdf070a"
+}
