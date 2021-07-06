@@ -20,5 +20,5 @@
   "include": [
     "app/**/*"
   ],
-  "exclude": ["node_modules", "types"]
+  "exclude": ["node_modules", "types", "dist", "**/*.test.ts"],
 }

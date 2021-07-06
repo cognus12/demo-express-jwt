@@ -1,0 +1,7 @@
+{
+  "preset": "ts-jest",
+  "testEnvironment": "node",
+  "testPathIgnorePatterns": ["node_modules", "\\.cache", "dist"],
+  "testMatch": ["**/__tests__/**/*.test.ts?(x)"],
+  "clearMocks": true
+}
