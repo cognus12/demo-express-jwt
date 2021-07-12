@@ -27,3 +27,11 @@ export interface UserDTO extends Pick<UserData, 'email' | 'username' | 'firstNam
 export interface UserDocument extends UserBaseDocument {}
 
 export interface UserModel extends Model<UserDocument> {}
+
+export interface UserEditableData extends Partial<Pick<UserData, 'email' | 'username' | 'firstName' | 'lastName'>> {}
+
+export interface UserRepoStruct {
+  findOne: (filter: Partial<UserData>) => Promise<UserDTO>
+  deleteOne: (_id: string) => Promise<void>
+  update: (_id: string, data: UserEditableData) => Promise<UserDTO>
+}
