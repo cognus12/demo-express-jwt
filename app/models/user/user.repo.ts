@@ -1,4 +1,4 @@
-import { UserData, UserDTO, UserEditableData, UserModel, UserRepoStruct } from './interfaces'
+import { FilterData, UserData, UserDTO, UserEditableData, UserModel, UserRepoStruct } from './interfaces'
 import { userModel } from './user.model'
 
 export class UserRepo implements UserRepoStruct {
@@ -6,7 +6,7 @@ export class UserRepo implements UserRepoStruct {
     this.userModel = userModel
   }
 
-  findOne = async (filter: Partial<UserData>): Promise<UserDTO> => {
+  findOne = async (filter: FilterData): Promise<UserDTO> => {
     const user = await this.userModel.findOne(filter)
     return user.getUserDTO()
   }
@@ -17,8 +17,13 @@ export class UserRepo implements UserRepoStruct {
     return user.getUserDTO()
   }
 
-  update = async (_id: string, data: UserEditableData): Promise<UserDTO> => {
+  update = async (_id: string, data: UserEditableData): Promise<UserDTO | null> => {
     const user = await this.userModel.findOne({ _id })
+
+    if (!user) {
+      return null
+    }
+
     await user.update({ $set: { ...data } })
     await user.save()
     return user.getUserDTO()
@@ -26,6 +31,19 @@ export class UserRepo implements UserRepoStruct {
 
   deleteOne = async (_id: string): Promise<void> => {
     await this.userModel.deleteOne({ _id })
+  }
+
+  getPasswordHash = async (email: string): Promise<{ passwordHash: string; user: UserDTO } | undefined> => {
+    const user = await this.userModel.findOne({ email })
+
+    if (!user) {
+      return undefined
+    }
+
+    return {
+      passwordHash: user.password,
+      user: user.getUserDTO(),
+    }
   }
 }
 

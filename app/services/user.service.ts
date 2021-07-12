@@ -1,9 +1,9 @@
 import * as bcrypt from 'bcrypt'
 import { getConfig } from '../config/config'
-import { UserData, UserDTO, UserModel } from '../models/user/interfaces'
-import { userModel } from '../models/user/user.model'
+import { UserData, UserDTO, UserRepoStruct } from '../models/user/interfaces'
 import { tokenService, TokenService } from './token.service'
 import { ApiError } from '../middleware/error-handler'
+import { userRepo } from '../models/user/user.repo'
 
 const SALT = getConfig('SALT')
 
@@ -16,15 +16,15 @@ export interface AuthData {
 }
 
 export class UserService {
-  public constructor(private readonly userModel: UserModel, private tokenService: TokenService) {
-    this.userModel = userModel
+  public constructor(private readonly userRepo: UserRepoStruct, private tokenService: TokenService) {
+    this.userRepo = userRepo
     this.tokenService = tokenService
   }
 
   public register = async (data: UserData): Promise<AuthData> => {
     const { email, username, password, firstName, lastName, gender } = data
 
-    const candidate = await this.userModel.findOne({ email })
+    const candidate = await this.userRepo.findOne({ email })
 
     if (candidate) {
       this._throwAlreadyExists()
@@ -32,7 +32,7 @@ export class UserService {
 
     const hashedPassword = await this._hashPassword(password)
 
-    const newUser = new this.userModel({
+    const user = await this.userRepo.create({
       email,
       username,
       password: hashedPassword,
@@ -41,40 +41,34 @@ export class UserService {
       gender,
     })
 
-    await newUser.save()
+    const { accessToken, refreshToken } = this.tokenService.generateTokens(user.id)
 
-    const userDTO = newUser.getUserDTO()
+    await this.tokenService.saveToken(user.id, refreshToken)
 
-    const { accessToken, refreshToken } = this.tokenService.generateTokens(userDTO.id)
-
-    await this.tokenService.saveToken(userDTO.id, refreshToken)
-
-    return { user: userDTO, accessToken, refreshToken }
+    return { user, accessToken, refreshToken }
   }
 
   public login = async (data: Pick<UserData, 'email' | 'password'>): Promise<AuthData> => {
     const { email, password } = data
 
-    const [user] = await this.userModel.find({ email })
+    const { passwordHash, user } = await this.userRepo.getPasswordHash(email)
 
-    if (!user) {
+    if (!passwordHash) {
       this._throwAuthFailed()
     }
 
-    const isPasswordValid = await this._validatePassword(password, user.password)
+    const isPasswordValid = await this._validatePassword(password, passwordHash)
 
     if (!isPasswordValid) {
       this._throwAuthFailed()
     }
 
-    const userDTO = user.getUserDTO()
+    const { accessToken, refreshToken } = this.tokenService.generateTokens(user.id)
 
-    const { accessToken, refreshToken } = this.tokenService.generateTokens(userDTO.id)
-
-    await this.tokenService.saveToken(userDTO.id, refreshToken)
+    await this.tokenService.saveToken(user.id, refreshToken)
 
     return {
-      user: userDTO,
+      user,
       accessToken,
       refreshToken,
     }
@@ -99,15 +93,14 @@ export class UserService {
       throw ApiError.UnauthorizedError()
     }
 
-    const user = await this.userModel.findById(userId)
-    const userDTO = user.getUserDTO()
+    const user = await this.userRepo.findOne({ _id: userId })
 
-    const { accessToken, refreshToken } = this.tokenService.generateTokens(userDTO.id)
+    const { accessToken, refreshToken } = this.tokenService.generateTokens(user.id)
 
-    await this.tokenService.saveToken(userDTO.id, refreshToken)
+    await this.tokenService.saveToken(user.id, refreshToken)
 
     return {
-      user: userDTO,
+      user,
       accessToken,
       refreshToken,
     }
@@ -116,26 +109,20 @@ export class UserService {
   // TODO make som refactoring of update
 
   public edit = async (data: UserEditParams): Promise<UserDTO> => {
-    const { id, email, username, firstName, lastName } = data
+    const { id } = data
 
-    const user = await this.userModel.findOne({ _id: id })
+    const user = await this.userRepo.update(id, data)
 
     if (!user) {
+      throw ApiError.BadRequest('User not found')
     }
 
-    user.email = email ? email : user.email
-    user.username = username ? username : user.username
-    user.firstName = firstName ? firstName : user.firstName
-    user.lastName = lastName ? lastName : user.lastName
-
-    await user.save()
-
-    return user.getUserDTO()
+    return user
   }
 
   public delete = async (id: string, refreshToken: string): Promise<void> => {
     await this.tokenService.removeToken(refreshToken)
-    await this.userModel.deleteOne({ _id: id })
+    await this.userRepo.deleteOne(id)
   }
 
   private _validatePassword = async (password: string, hash: string): Promise<boolean> => {
@@ -160,4 +147,4 @@ export class UserService {
   }
 }
 
-export const userService = new UserService(userModel, tokenService)
+export const userService = new UserService(userRepo, tokenService)

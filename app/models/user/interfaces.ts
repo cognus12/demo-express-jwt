@@ -30,8 +30,14 @@ export interface UserModel extends Model<UserDocument> {}
 
 export interface UserEditableData extends Partial<Pick<UserData, 'email' | 'username' | 'firstName' | 'lastName'>> {}
 
+export interface FilterData extends Partial<UserData> {
+  _id?: ObjectId | string
+}
+
 export interface UserRepoStruct {
-  findOne: (filter: Partial<UserData>) => Promise<UserDTO>
+  findOne: (filter: FilterData) => Promise<UserDTO>
+  create: (data: UserData) => Promise<UserDTO>
   deleteOne: (_id: string) => Promise<void>
   update: (_id: string, data: UserEditableData) => Promise<UserDTO>
+  getPasswordHash: (email: string) => Promise<{ passwordHash: string; user: UserDTO } | undefined>
 }
