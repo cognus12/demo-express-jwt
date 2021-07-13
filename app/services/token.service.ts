@@ -1,8 +1,9 @@
 import jwt from 'jsonwebtoken'
 import { getConfig } from '../config/config'
 import { ObjectId } from 'mongoose'
-import { TokenDocument, TokenModel } from '../models/token/interfaces'
-import { tokenModel } from '../models/token/token.model'
+import { TokenRepoStruct } from '../models/token/interfaces'
+
+import { tokenRepo } from '../models/token/token.repo'
 
 const ACCESS_KEY = getConfig('JWT_ACCESS_KEY')
 const REFRESH_KEY = getConfig('JWT_REFRESH_KEY')
@@ -15,8 +16,8 @@ export interface TokenData {
 }
 
 export class TokenService {
-  public constructor(private tokenModel: TokenModel) {
-    this.tokenModel = tokenModel
+  public constructor(private tokenRepo: TokenRepoStruct) {
+    this.tokenRepo = tokenRepo
   }
 
   public generateTokens = (id: ObjectId): TokenData => {
@@ -26,22 +27,17 @@ export class TokenService {
     }
   }
 
-  public saveToken = async (id: ObjectId, refreshToken: string): Promise<TokenDocument> => {
-    const tokenData = await this.tokenModel.findOne({ user: id })
+  public saveToken = async (id: ObjectId, refreshToken: string): Promise<void> => {
+    const successSave = await this.tokenRepo.update(id, refreshToken)
 
-    if (tokenData) {
-      tokenData.refreshToken = refreshToken
-      return await tokenData.save()
+    if (!successSave) {
+      await this.tokenRepo.create({ user: id, refreshToken })
     }
-
-    return await this.tokenModel.create({ user: id, refreshToken })
   }
 
-  public findToken = async (refreshToken: string): Promise<TokenDocument> =>
-    await this.tokenModel.findOne({ refreshToken })
+  public findToken = async (refreshToken: string): Promise<string> => await this.tokenRepo.findOne({ refreshToken })
 
-  public removeToken = async (refreshToken: string): Promise<unknown> =>
-    await this.tokenModel.deleteOne({ refreshToken })
+  public removeToken = async (refreshToken: string): Promise<void> => await this.tokenRepo.delete(refreshToken)
 
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   public validateAccessToken = (accessToken: string): any => {
@@ -70,4 +66,4 @@ export class TokenService {
   }
 }
 
-export const tokenService = new TokenService(tokenModel)
+export const tokenService = new TokenService(tokenRepo)
