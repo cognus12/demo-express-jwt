@@ -8,3 +8,14 @@ export interface TokenData {
 export interface TokenDocument extends TokenData, Document {}
 
 export interface TokenModel extends Model<TokenDocument> {}
+
+export type Token = TokenData['refreshToken']
+
+export type UserId = TokenData['user']
+
+export interface TokenRepoStruct {
+  findOne: (filter: Partial<TokenData>) => Promise<string>
+  delete: (refreshToken: Token) => Promise<void>
+  create: (data: TokenData) => Promise<void>
+  update: (id: UserId, newToken: Token) => Promise<boolean>
+}
