@@ -8,6 +8,11 @@ export class UserRepo implements UserRepoStruct {
 
   findOne = async (filter: FilterData): Promise<UserDTO> => {
     const user = await this.userModel.findOne(filter)
+
+    if (!user) {
+      return undefined
+    }
+
     return user.getUserDTO()
   }
 
@@ -18,14 +23,14 @@ export class UserRepo implements UserRepoStruct {
   }
 
   update = async (_id: string, data: UserEditableData): Promise<UserDTO | null> => {
-    const user = await this.userModel.findOne({ _id })
+    const user = await this.userModel.findOneAndUpdate({ _id }, { $set: { ...data } }, { new: true })
 
     if (!user) {
       return null
     }
 
-    await user.update({ $set: { ...data } })
     await user.save()
+
     return user.getUserDTO()
   }
 

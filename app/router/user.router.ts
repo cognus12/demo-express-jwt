@@ -1,7 +1,8 @@
 import { Router } from 'express'
-import { userController } from '../controllers/user.controller'
+
 import { authValidationRules, deleteValidationRules, validate } from '../middleware/validation'
 import { onlyAuthorised } from '../middleware/security'
+import { userController } from '../modules/user'
 
 export const userRouter = Router()
 

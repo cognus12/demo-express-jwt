@@ -1,9 +1,8 @@
 import * as bcrypt from 'bcrypt'
-import { getConfig } from '../config/config'
-import { UserData, UserDTO, UserRepoStruct } from '../models/user/interfaces'
-import { tokenService, TokenService } from './token.service'
-import { ApiError } from '../middleware/error-handler'
-import { userRepo } from '../models/user/user.repo'
+import { getConfig } from '../../config/config'
+import { UserData, UserDTO, UserRepoStruct } from '../../models/user/interfaces'
+import { TokenService } from '../../shared-services/token.service'
+import { ApiError } from '../../middleware/error-handler'
 
 const SALT = getConfig('SALT')
 
@@ -106,7 +105,7 @@ export class UserService {
     }
   }
 
-  // TODO make som refactoring of update
+  // TODO make some refactoring of update
 
   public edit = async (data: UserEditParams): Promise<UserDTO> => {
     const { id } = data
@@ -146,5 +145,3 @@ export class UserService {
     throw ApiError.UnauthorizedError()
   }
 }
-
-export const userService = new UserService(userRepo, tokenService)

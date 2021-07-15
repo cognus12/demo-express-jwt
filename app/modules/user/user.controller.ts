@@ -1,17 +1,20 @@
 import { NextFunction, Request, RequestHandler, Response } from 'express'
-import { userService } from '../services/user.service'
-import { pick } from '../ustils/pick'
-import { getConfig } from '../config/config'
+import { UserService } from './user.service'
+import { pick } from '../../ustils/pick'
+import { getConfig } from '../../config/config'
 import { toMs } from 'ms-typescript'
 
 const REFRESH_EXP_DAYS = toMs(getConfig('JWT_REFRESH_EXP'))
 
-class UserController {
+export class UserController {
+  public constructor(private userService: UserService) {
+    this.userService = userService
+  }
+
   public register: RequestHandler = async (req, res, next) => {
     const data = pick(req.body, ['email', 'username', 'password', 'firstName', 'lastName'])
-
     try {
-      const { user, accessToken, refreshToken } = await userService.register(data)
+      const { user, accessToken, refreshToken } = await this.userService.register(data)
 
       res.cookie('refreshToken', refreshToken, { maxAge: REFRESH_EXP_DAYS, httpOnly: true })
 
@@ -25,7 +28,7 @@ class UserController {
     const loginData = pick(req.body, ['email', 'password'])
 
     try {
-      const { user, accessToken, refreshToken } = await userService.login(loginData)
+      const { user, accessToken, refreshToken } = await this.userService.login(loginData)
 
       res.cookie('refreshToken', refreshToken, { maxAge: REFRESH_EXP_DAYS, httpOnly: true })
 
@@ -39,7 +42,7 @@ class UserController {
     try {
       const { refreshToken } = req.cookies
 
-      const token = await userService.logout(refreshToken)
+      const token = await this.userService.logout(refreshToken)
 
       res.clearCookie('refreshToken')
 
@@ -53,7 +56,7 @@ class UserController {
     try {
       const { refreshToken: currentRefreshToken } = req.cookies
 
-      const { user, accessToken, refreshToken } = await userService.refresh(currentRefreshToken)
+      const { user, accessToken, refreshToken } = await this.userService.refresh(currentRefreshToken)
 
       res.cookie('refreshToken', refreshToken, { maxAge: REFRESH_EXP_DAYS, httpOnly: true })
 
@@ -62,12 +65,10 @@ class UserController {
       next(err)
     }
   }
-
+  // TODO bug with update, filter undefined
   public edit = async (req: Request, res: Response, next: NextFunction) => {
-    const { id, email, username, firstName, lastName } = req.body
-
     try {
-      const updatedUserDTO = await userService.edit({ id, email, username, lastName, firstName })
+      const updatedUserDTO = await this.userService.edit({ ...req.body })
 
       return res.status(200).json({ user: { ...updatedUserDTO } })
     } catch (err) {
@@ -80,7 +81,7 @@ class UserController {
     const { refreshToken } = req.cookies
 
     try {
-      await userService.delete(id, refreshToken)
+      await this.userService.delete(id, refreshToken)
       res.clearCookie('refreshToken')
 
       return res.status(200).json({ success: true })
@@ -89,5 +90,3 @@ class UserController {
     }
   }
 }
-
-export const userController = new UserController()
