@@ -15,7 +15,7 @@
     "test": "jest --runInBand"
   },
   "author": "Ivan Zotov (corvuss90@gmail.com)",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "bcrypt": "^5.0.1",
     "cookie-parser": "^1.4.5",
